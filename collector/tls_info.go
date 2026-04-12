@@ -34,7 +34,6 @@ func init() {
 
 type TLSInfoCollector struct {
 	openedConnections *prometheus.Desc
-	maxConnections    *prometheus.Desc
 	clearTextWrite    *prometheus.Desc
 	logger            log.Logger
 	config            *KamailioCollectorConfig
@@ -47,13 +46,9 @@ func NewTLSInfoCollector(config *KamailioCollectorConfig, logger log.Logger) (Co
 			prometheus.BuildFQName(namespace, "tls", "opened_connections"),
 			"TLS Opened Connections",
 			[]string{}, nil),
-		maxConnections: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "tls", "max_connections"),
-			"TLS Opened Connections",
-			[]string{}, nil),
 		clearTextWrite: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "tls", "clear_text_write_queued_bytes"),
-			"TLS Opened Connections",
+			"TLS clear text write queued bytes",
 			[]string{}, nil),
 		logger: logger,
 		config: config,
@@ -68,11 +63,9 @@ func (c *TLSInfoCollector) Update(conn net.Conn, metricChannel chan<- prometheus
 
 	for _, record := range records {
 		items, _ := record.StructItems()
-		var maxConnections, openedConnections, clearTextWriteQueuedBytes int
+		var openedConnections, clearTextWriteQueuedBytes int
 		for _, item := range items {
 			switch item.Key {
-			case "max_connections":
-				maxConnections, _ = item.Value.Int()
 			case "opened_connections":
 				openedConnections, _ = item.Value.Int()
 			case "clear_text_write_queued_bytes":
@@ -83,11 +76,6 @@ func (c *TLSInfoCollector) Update(conn net.Conn, metricChannel chan<- prometheus
 			c.openedConnections,
 			prometheus.GaugeValue,
 			float64(openedConnections),
-		)
-		metricChannel <- prometheus.MustNewConstMetric(
-			c.maxConnections,
-			prometheus.GaugeValue,
-			float64(maxConnections),
 		)
 		metricChannel <- prometheus.MustNewConstMetric(
 			c.clearTextWrite,
