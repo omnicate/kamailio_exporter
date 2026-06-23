@@ -1,0 +1,29 @@
+name: Sync main from angarium-cloud upstream
+
+# Keeps omnicate/kamailio_exporter:main as a verbatim mirror of
+# angarium-cloud/kamailio_exporter:main. wgtwo-only changes live on the
+# wgtwo-patch branch (where this workflow also lives) and are rebased
+# onto main as upstream advances.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge upstream into main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/merge-upstream" \
+            -f branch=main
